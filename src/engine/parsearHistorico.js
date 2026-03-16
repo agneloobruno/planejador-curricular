@@ -1,20 +1,15 @@
-// src/engine/parsearHistorico.js
 // Lê o PDF do histórico da UFMT e retorna array de disciplinas
 
 import * as pdfjsLib from "pdfjs-dist";
 
 const MAX_PDF_PAGES = 80;
 
-// Worker necessário para o pdfjs funcionar no browser
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.mjs",
   import.meta.url
 ).toString();
 
-/**
- * Recebe um File (do input ou drag-and-drop) e retorna:
- * [{ nome, status, periodo, ch }]
- */
+
 export async function parsearHistorico(file) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;

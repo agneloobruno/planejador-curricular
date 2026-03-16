@@ -1,12 +1,10 @@
 // =============================================================
-// src/engine/testar.js
 // Rode com: node --input-type=module < src/engine/testar.js
 // ou: node src/engine/testar.js  (se package.json tiver "type":"module")
 // =============================================================
 
 import { classificar } from "./classificar.js";
 
-// Simulação do histórico real mencionado no documento
 const historico = [
   // Aprovadas (AP)
   { nome: "Álgebra Linear",                     status: "AP", periodo: "20191" },
@@ -34,7 +32,6 @@ const historico = [
 
 const resultado = classificar(historico);
 
-// ---- Exibe resultado formatado ----
 console.log("\n╔══════════════════════════════════════════════════════╗");
 console.log("║         RESULTADO DO MOTOR DE EQUIVALÊNCIAS          ║");
 console.log("╚══════════════════════════════════════════════════════╝\n");
