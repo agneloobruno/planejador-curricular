@@ -3,6 +3,8 @@ import { parsearHistorico } from "./engine/parsearHistorico";
 import { classificar } from "./engine/classificar";
 import GradeCurricular from "./components/GradeCurricular";
 
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
 export default function App() {
   const [resultado, setResultado]     = useState(null);
   const [carregando, setCarregando]   = useState(false);
@@ -14,12 +16,17 @@ export default function App() {
     if (!file || file.type !== "application/pdf") {
       setErro("Só PDFs são aceitos."); return;
     }
+    if (file.size > MAX_PDF_SIZE_BYTES) {
+      setErro("PDF muito grande. Limite de 10 MB."); return;
+    }
     setCarregando(true); setErro(null);
     try {
       const historico = await parsearHistorico(file);
       setResultado(classificar(historico));
     } catch (e) {
-      setErro("Erro ao ler o PDF. Tente novamente."); console.error(e);
+      const msg = e instanceof Error ? e.message : "Erro ao ler o PDF. Tente novamente.";
+      setErro(msg);
+      if (import.meta.env.DEV) console.error(e);
     } finally {
       setCarregando(false);
     }

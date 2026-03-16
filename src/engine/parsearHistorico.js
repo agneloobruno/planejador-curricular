@@ -3,6 +3,8 @@
 
 import * as pdfjsLib from "pdfjs-dist";
 
+const MAX_PDF_PAGES = 80;
+
 // Worker necessário para o pdfjs funcionar no browser
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.mjs",
@@ -17,6 +19,10 @@ export async function parsearHistorico(file) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
+  if (pdf.numPages > MAX_PDF_PAGES) {
+    throw new Error("PDF com muitas páginas. Limite de 80 páginas.");
+  }
+
   let textoCompleto = "";
 
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -26,8 +32,10 @@ export async function parsearHistorico(file) {
     textoCompleto += linhaPagina + "\n";
   }
 
+  if (import.meta.env.DEV) {
     console.log("TAMANHO DO TEXTO:", textoCompleto.length);
     console.log("PRIMEIRAS 1000 CHARS:", JSON.stringify(textoCompleto.slice(0, 1000)));
+  }
 
   return extrairDisciplinas(textoCompleto);
   
@@ -60,7 +68,7 @@ function extrairDisciplinas(texto) {
   // Se não achou nada, tenta formato sem código (PDF renderizado diferente)
   if (disciplinas.length === 0) {
     const regexSemCodigo =
-      /(\d{5})\s+([A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜ][A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜa-záéíóúàãõçâêîôûü0-9 :,\-\/]+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AP|AE|APM|APO|RM|RMF|RF|MA|NA|RP|RMM)\b/g;
+      /(\d{5})\s+([A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜ][A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜa-záéíóúàãõçâêîôûü0-9 :,\-/]+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AP|AE|APM|APO|RM|RMF|RF|MA|NA|RP|RMM)\b/g;
 
     while ((match = regexSemCodigo.exec(texto)) !== null) {
       const periodo = match[1];

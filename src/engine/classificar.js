@@ -99,7 +99,6 @@ function normalizarNome(nome) {
 export function classificar(historico) {
   // 1. Separa aprovadas das bloqueadas
   const aprovadas   = historico.filter(d => STATUS_APROVADO.includes(d.status));
-  const reprovadas  = historico.filter(d => !STATUS_APROVADO.includes(d.status));
   const nomesAprovados = aprovadas.map(d => normalizarNome(d.nome));
 
   // 2. Verifica o caso especial de Algoritmos
@@ -114,7 +113,6 @@ export function classificar(historico) {
 
   const obrigatorias = [];
   const optativas    = [];
-  const bloqueadas   = [];
   const jaProcessadas = new Set(); // evitar duplicatas
 
   // 3. Processa cada equivalência da tabela
