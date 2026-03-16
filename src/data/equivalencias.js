@@ -136,7 +136,7 @@ export const equivalencias = [
   { antiga: "Conceitos de Linguagens de Programação", nova: "Conceitos de Linguagens de Programação",             tipo: "optativa", aproveitamento: "total" },
   { antiga: "Métodos Computacionais",              nova: "Métodos Computacionais",                                tipo: "optativa", aproveitamento: "total" },
   { antiga: "Computação Gráfica",                  nova: "Computação Gráfica",                                    tipo: "optativa", aproveitamento: "total" },
-  { antiga: "Leitura e Produção de Textos: Gêneros Acadêmicos", nova: "Optativa Livre",                           tipo: "optativa", aproveitamento: "total" },
+  { antiga: "Leitura e Produção de Textos: Gêneros Acadêmicos", nova: "Optativa Livre", tipo: "optativa", aproveitamento: "total" },
 ];
 
 // ---------------------------------------------------------------
@@ -157,5 +157,5 @@ export const CASO_ALGORITMOS = {
 // ---------------------------------------------------------------
 // STATUS VÁLIDOS E INVÁLIDOS
 // ---------------------------------------------------------------
-export const STATUS_APROVADO  = ["AP"];
+export const STATUS_APROVADO  = ["AP", "AE", "APM", "APO"];
 export const STATUS_INVALIDOS = ["RM", "RMF", "MA", "NA"];

@@ -35,12 +35,15 @@ import {
 // Aliases: como o PDF escreve → nome canônico da tabela de equivalências
 const ALIASES = {
   "teoria geral dos sistemas":              "Teoria Geral de Sistemas",
+  "teoria das organizacoes":                "Teoria das Organizações",
   "organizacao sistemas e metodos":         "Organização, Sistemas e Métodos",
   "probabilidade e estatistica":            "Probabilidade e Estatística",
   "algebra linear":                         "Álgebra Linear",
   "logica":                                 "Lógica",
   "fundamentos da computacao":              "Fundamentos da Computação",
+  "gestao de pessoas":                      "Gestão de Pessoas",
   "informatica aplicada a educacao":        "Informática aplicada à Educação",
+  "interface humano-computador":            "Interface Humano-Computador",
   "topicos especiais em banco de dados":    "Tópicos Especiais em Banco de Dados",
   "topicos especiais em engenharia de software": "Tópicos Especiais em Engenharia de Software",
   "laboratorio de programacao":             "Laboratório de Programação",
@@ -55,8 +58,11 @@ const ALIASES = {
   "engenharia de software":                 "Engenharia de Software",
   "banco de dados":                         "Banco de Dados",
   "estrutura de dados":                     "Estrutura de Dados",
+  "sistemas a decisao":                     "Sistemas à Decisão",
   "arquitetura de computadores":            "Arquitetura de Computadores",
+  "arquitetura de computadores i":          "Arquitetura de Computadores",
   "sistemas de informacao":                 "Sistemas de Informação",
+  "inteligencia artificial":                "Inteligência Artificial",
   "gerencia de projetos":                   "Gerência de Projetos",
   "empreendedorismo em informatica":        "Empreendedorismo em Informática",
   "criptografia e seguranca de dados":      "Criptografia e Segurança de Dados",
@@ -177,14 +183,8 @@ export function classificar(historico) {
   }
 
   // 5. Disciplinas com status inválido → bloqueadas
-  for (const d of reprovadas) {
-    bloqueadas.push({
-      disciplinaAntiga: d.nome,
-      status:           d.status,
-      periodo:          d.periodo || null,
-      motivo:           `Status ${d.status} não conta como concluída`,
-    });
-  }
+  // Reprovadas ficam registradas mas não vão para bloqueadas
+  // A interface decide o que mostrar com base nos pré-requisitos
 
   // 6. Calcula quais disciplinas do PPC novo já estão liberadas (pré-req satisfeitos)
   const concluidasNoPPCNovo = new Set(obrigatorias
@@ -201,7 +201,7 @@ export function classificar(historico) {
     })
     .map(d => d.nome);
 
-  return { obrigatorias, optativas, bloqueadas, prereqsLiberados };
+  return { obrigatorias, optativas, bloqueadas: [], prereqsLiberados };
 }
 
 // ---------------------------------------------------------------

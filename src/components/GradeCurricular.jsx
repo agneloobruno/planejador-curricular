@@ -2,8 +2,8 @@ import { useState } from "react";
 import { fluxoNovo } from "../data/equivalencias";
 
 const SELOS = {
-  concluida_equivalencia: { cor: "var(--purple)", bg: "var(--purple-bg)", icone: "✦", label: "Equivalência" },
-  concluida_historico:    { cor: "var(--green)",  bg: "var(--green-bg)",  icone: "✓", label: "Concluída"   },
+  concluida_equivalencia: { cor: "var(--purple)", bg: "var(--purple-bg)", icone: "✦", label: "Aprovada por Equivalência" },
+  concluida_historico:    { cor: "var(--green)",  bg: "var(--green-bg)",  icone: "✓", label: "Aprovada"   },
   parcial:                { cor: "var(--amber)",  bg: "var(--amber-bg)",  icone: "◑", label: "Parcial"     },
   optativa_aproveitada:   { cor: "var(--blue)",   bg: "var(--blue-bg)",   icone: "◈", label: "Optativa"    },
   liberada:               { cor: "var(--amber)",  bg: "var(--amber-bg)",  icone: "→", label: "Liberada"    },
@@ -29,26 +29,27 @@ export default function GradeCurricular({ resultado, onReset }) {
     if (!mapaSelos[nome]) mapaSelos[nome] = { selo: "liberada" };
 
 function getSelo(nome) {
-  // Concluída ou equivalência
+  // Já concluída por equivalência ou histórico
   if (mapaSelos[nome]) return mapaSelos[nome];
 
-  // Pré-requisitos satisfeitos mas ainda não cursada
-  if (resultado.prereqsLiberados.includes(nome))
-    return { selo: "liberada" };
-
-  // Verifica se algum pré-requisito ainda não foi concluído
   const disc = fluxoNovo.find(d => d.nome === nome);
-  if (disc && disc.prereqs.length > 0) {
-    const concluidasNomes = Object.keys(mapaSelos);
-    const faltaPrereq = disc.prereqs.some(p => !concluidasNomes.includes(p));
-    if (faltaPrereq) {
-      const faltando = disc.prereqs.filter(p => !concluidasNomes.includes(p));
-      return { selo: "bloqueada", obs: `Aguarda: ${faltando.join(", ")}` };
-    }
+  const concluidasNomes = new Set(Object.keys(mapaSelos));
+
+  // Verifica pré-requisitos
+  const prereqsSatisfeitos = !disc || disc.prereqs.length === 0 ||
+    disc.prereqs.every(p => concluidasNomes.has(p));
+
+  if (prereqsSatisfeitos) {
+    // Pré-req ok → liberada (seja reprovada antes ou nunca cursada)
+    return { selo: "liberada" };
   }
 
-  // Sem pré-requisito e ainda não cursada = disponível mas não feita
-  return { selo: "pendente" };
+  // Pré-req pendente → bloqueada com motivo
+  const faltando = disc.prereqs.filter(p => !concluidasNomes.has(p));
+  return {
+    selo: "bloqueada",
+    obs: `Aguarda: ${faltando.join(", ")}`,
+  };
 }
 
   const porSemestre = {};

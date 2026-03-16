@@ -26,12 +26,11 @@ export async function parsearHistorico(file) {
     textoCompleto += linhaPagina + "\n";
   }
 
-  // DEBUG TEMPORARIO — apaga depois
-  console.log("=== TEXTO BRUTO DO PDF ===");
-  console.log(textoCompleto.slice(0, 3000));
-  console.log("==========================");
+    console.log("TAMANHO DO TEXTO:", textoCompleto.length);
+    console.log("PRIMEIRAS 1000 CHARS:", JSON.stringify(textoCompleto.slice(0, 1000)));
 
   return extrairDisciplinas(textoCompleto);
+  
 }
 
 /**
@@ -44,35 +43,36 @@ export async function parsearHistorico(file) {
 function extrairDisciplinas(texto) {
   const disciplinas = [];
 
-  // O histórico UFMT vem como um bloco corrido. O padrão real é:
-  // PERIODO  SI  NOME DA DISCIPLINA  #CODIGO  [Obs: ...]  CH  CRÉDITOS  NOTA  FALTAS  STATUS
-  // Exemplo: 20231  SI  ALGORITMOS I  #30829280  60  4  10.00  0  AP
-
-  // Captura: período | nome | ch | nota | faltas | status
-  const regex =
-    /(\d{5})\s+SI\d*\s+([A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜ][A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜa-záéíóúàãõçâêîôûü0-9 :,\-\/]+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+([\d.]+)\s+(\d+)\s+(AP|RM|RMF|MA|NA)\b/g;
+  // Tenta o formato com código SI/SI1/SI2/CV no início
+  const regexComCodigo =
+    /(\d{5})\s+(?:SI\d*|CV|LLB|cv)\s+(.+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AP|AE|APM|APO|RM|RMF|RF|MA|NA|RP|RMM)\b/g;
 
   let match;
-  while ((match = regex.exec(texto)) !== null) {
+  while ((match = regexComCodigo.exec(texto)) !== null) {
     const periodo = match[1];
-    const nome    = match[2].trim()
-      // remove sufixos de "Obs:" que podem ter vazado no nome
-      .replace(/\s+Obs:.*$/, "")
-      .trim();
+    const nome    = match[2].trim().replace(/\s+Obs:.*$/, "").trim();
     const ch      = parseInt(match[3]);
-    const status  = match[6];
-
+    const status  = match[4];
     if (nome.length < 4) continue;
-    // Ignora linhas de cabeçalho ou rodapé
-    if (nome.includes("Histórico") || nome.includes("Período")) continue;
-
     disciplinas.push({ nome, ch, periodo, status });
   }
 
-  // DEBUG — apaga depois
-  const resultado = deduplicar(disciplinas);
-  console.table(resultado);
-  return resultado;
+  // Se não achou nada, tenta formato sem código (PDF renderizado diferente)
+  if (disciplinas.length === 0) {
+    const regexSemCodigo =
+      /(\d{5})\s+([A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜ][A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜa-záéíóúàãõçâêîôûü0-9 :,\-\/]+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AP|AE|APM|APO|RM|RMF|RF|MA|NA|RP|RMM)\b/g;
+
+    while ((match = regexSemCodigo.exec(texto)) !== null) {
+      const periodo = match[1];
+      const nome    = match[2].trim().replace(/\s+Obs:.*$/, "").trim();
+      const ch      = parseInt(match[3]);
+      const status  = match[4];
+      if (nome.length < 4) continue;
+      disciplinas.push({ nome, ch, periodo, status });
+    }
+  }
+
+  return deduplicar(disciplinas);
 }
 
 function deduplicar(disciplinas) {
