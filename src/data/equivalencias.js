@@ -1,5 +1,4 @@
 // =============================================================
-// src/data/equivalencias.js
 // Gerado a partir do PPC de Sistemas de Informação - UFMT 2026
 // Seção 5.1 - Quadro de Equivalência dos Fluxos Curriculares
 // =============================================================
