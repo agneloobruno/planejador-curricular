@@ -1,11 +1,11 @@
 // Lê o PDF do histórico da UFMT e retorna array de disciplinas
 
-import * as pdfjsLib from "pdfjs-dist";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 const MAX_PDF_PAGES = 80;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.mjs",
+  "pdfjs-dist/legacy/build/pdf.worker.mjs",
   import.meta.url
 ).toString();
 
