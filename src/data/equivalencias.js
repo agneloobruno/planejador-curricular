@@ -74,7 +74,7 @@ export const equivalencias = [
   { antiga: "Matemática Discreta",                nova: "Pré-Cálculo",                                           tipo: "obrigatoria", aproveitamento: "total" },
   { antiga: "Teoria das Organizações",            nova: "Teoria Geral da Administração I",                       tipo: "obrigatoria", aproveitamento: "total" },
   { antiga: "Estrutura de Dados",                 nova: "Estrutura de Dados",                                    tipo: "obrigatoria", aproveitamento: "total" },
-  { antiga: "Algoritmos III",                     nova: "Programação Orientada a Objetos",                       tipo: "obrigatoria", aproveitamento: "total" },
+  { antiga: "Algoritmos III",                     nova: "Programação Orientada a Objeto",                        tipo: "obrigatoria", aproveitamento: "total" },
   { antiga: "Banco de Dados",                     nova: "Banco de Dados",                                        tipo: "obrigatoria", aproveitamento: "total" },
   { antiga: "Probabilidade e Estatística",        nova: "Probabilidade e Estatística",                           tipo: "obrigatoria", aproveitamento: "total" },
   { antiga: "Sistemas Operacionais",              nova: "Sistemas Operacionais",                                 tipo: "obrigatoria", aproveitamento: "total" },

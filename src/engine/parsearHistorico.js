@@ -2,6 +2,15 @@
 
 const MAX_PDF_PAGES = 80;
 
+function criarErro(codigo, mensagem, cause) {
+  const erro = new Error(mensagem);
+  erro.code = codigo;
+  if (cause !== undefined) {
+    erro.cause = cause;
+  }
+  return erro;
+}
+
 async function lerArquivoComoArrayBuffer(file) {
   if (file && typeof file.arrayBuffer === "function") {
     return file.arrayBuffer();
@@ -26,7 +35,10 @@ async function carregarPdfJsLegacy() {
 
 function validarCabecalhoPdf(bytes) {
   if (!bytes || bytes.length < 4) {
-    throw new Error("Arquivo inválido ou incompleto. Tente baixar/salvar o PDF localmente e reenviar.");
+    throw criarErro(
+      "E_PDF_INCOMPLETO",
+      "Arquivo inválido ou incompleto. Tente baixar/salvar o PDF localmente e reenviar."
+    );
   }
 
   const ehPdf =
@@ -36,17 +48,32 @@ function validarCabecalhoPdf(bytes) {
     bytes[3] === 0x46;   // F
 
   if (!ehPdf) {
-    throw new Error("O arquivo selecionado não parece ser um PDF válido.");
+    throw criarErro("E_PDF_HEADER", "O arquivo selecionado não parece ser um PDF válido.");
   }
 }
 
 
 export async function parsearHistorico(file) {
-  const arrayBuffer = await lerArquivoComoArrayBuffer(file);
+  let arrayBuffer;
+  try {
+    arrayBuffer = await lerArquivoComoArrayBuffer(file);
+  } catch (e) {
+    throw criarErro("E_FILE_READ", "Falha ao ler o arquivo selecionado.", e);
+  }
+
   const bytes = new Uint8Array(arrayBuffer);
   validarCabecalhoPdf(bytes);
   const pdfjsLib = await carregarPdfJsLegacy();
-  const pdf = await pdfjsLib.getDocument({ data: bytes, disableWorker: true }).promise;
+  let pdf;
+  try {
+    pdf = await pdfjsLib.getDocument({ data: bytes, disableWorker: true }).promise;
+  } catch (e) {
+    throw criarErro(
+      "E_PDF_PARSE",
+      "Falha ao processar o PDF. Tente salvar o arquivo localmente no dispositivo e reenviar.",
+      e
+    );
+  }
 
   if (pdf.numPages > MAX_PDF_PAGES) {
     throw new Error("PDF com muitas páginas. Limite de 80 páginas.");
@@ -54,11 +81,15 @@ export async function parsearHistorico(file) {
 
   let textoCompleto = "";
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const pagina = await pdf.getPage(i);
-    const conteudo = await pagina.getTextContent();
-    const linhaPagina = conteudo.items.map(item => item.str).join(" ");
-    textoCompleto += linhaPagina + "\n";
+  try {
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pagina = await pdf.getPage(i);
+      const conteudo = await pagina.getTextContent();
+      const linhaPagina = conteudo.items.map(item => item.str).join(" ");
+      textoCompleto += linhaPagina + "\n";
+    }
+  } catch (e) {
+    throw criarErro("E_PDF_TEXT", "Falha ao extrair texto do PDF.", e);
   }
 
   if (import.meta.env.DEV) {

@@ -18,6 +18,36 @@ const CONTADORES = [
   { key: "bloqueadas",   label: "Bloqueadas",  cor: "var(--red)"    },
 ];
 
+function ChipOptativa({ item, s }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div
+      onClick={() => setExpanded(e => !e)}
+      style={{
+        padding: expanded ? "8px 12px" : "5px 12px",
+        borderRadius: expanded ? "10px" : "99px",
+        fontSize: "12px",
+        background: s.bg, color: s.cor,
+        border: `1px solid ${s.cor}`,
+        cursor: "pointer",
+        transition: "all .2s",
+        userSelect: "none",
+      }}
+    >
+      {item.disciplinaNova}
+      {expanded && (
+        <div style={{
+          fontSize: "11px", color: s.cor, opacity: .75,
+          marginTop: "4px", paddingTop: "4px",
+          borderTop: `1px solid ${s.cor}`,
+        }}>
+          ← {item.disciplinaAntiga}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GradeCurricular({ resultado, onReset }) {
   const [aba, setAba] = useState("grade");
   const [hover, setHover] = useState(null);
@@ -28,29 +58,18 @@ export default function GradeCurricular({ resultado, onReset }) {
   for (const nome of resultado.prereqsLiberados)
     if (!mapaSelos[nome]) mapaSelos[nome] = { selo: "liberada" };
 
-function getSelo(nome) {
-  // Já concluída por equivalência ou histórico
-  if (mapaSelos[nome]) return mapaSelos[nome];
+  function getSelo(nome) {
+    if (mapaSelos[nome]) return mapaSelos[nome];
 
-  const disc = fluxoNovo.find(d => d.nome === nome);
-  const concluidasNomes = new Set(Object.keys(mapaSelos));
+    if (resultado.prereqsLiberados.includes(nome))
+      return { selo: "liberada" };
 
-  // Verifica pré-requisitos
-  const prereqsSatisfeitos = !disc || disc.prereqs.length === 0 ||
-    disc.prereqs.every(p => concluidasNomes.has(p));
+    const bloqueada = resultado.bloqueadas.find(d => d.disciplinaAntiga === nome);
+    if (bloqueada)
+      return { selo: "bloqueada", obs: bloqueada.motivo };
 
-  if (prereqsSatisfeitos) {
-    // Pré-req ok → liberada (seja reprovada antes ou nunca cursada)
-    return { selo: "liberada" };
+    return { selo: "pendente" };
   }
-
-  // Pré-req pendente → bloqueada com motivo
-  const faltando = disc.prereqs.filter(p => !concluidasNomes.has(p));
-  return {
-    selo: "bloqueada",
-    obs: `Aguarda: ${faltando.join(", ")}`,
-  };
-}
 
   const porSemestre = {};
   for (const d of fluxoNovo) {
@@ -59,7 +78,9 @@ function getSelo(nome) {
   }
 
   const nums = {
-    obrigatorias: resultado.obrigatorias.length,
+    obrigatorias: resultado.obrigatorias.filter(d =>
+      d.selo === "concluida_equivalencia" || d.selo === "concluida_historico"
+    ).length,
     optativas:    resultado.optativas.length,
     liberadas:    resultado.prereqsLiberados.length,
     bloqueadas:   resultado.bloqueadas.length,
@@ -211,7 +232,7 @@ function getSelo(nome) {
             { titulo: "Concluídas por equivalência", selo: "concluida_equivalencia",
               items: resultado.obrigatorias.filter(d => d.selo === "concluida_equivalencia").map(d => d.disciplinaNova) },
             { titulo: "Optativas aproveitadas", selo: "optativa_aproveitada",
-              items: resultado.optativas.map(d => d.disciplinaNova) },
+              items: resultado.optativas },
             { titulo: "Liberadas para matrícula", selo: "liberada",
               items: resultado.prereqsLiberados },
             { titulo: "Bloqueadas", selo: "bloqueada",
@@ -233,13 +254,15 @@ function getSelo(nome) {
                   }}>{grupo.items.length}</span>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {grupo.items.map((nome, i) => (
-                    <div key={i} style={{
-                      padding: "5px 12px", borderRadius: "99px", fontSize: "12px",
-                      background: s.bg, color: s.cor,
-                      border: `1px solid ${s.cor}`,
-                      transition: "opacity .15s",
-                    }}>{nome}</div>
+                  {grupo.items.map((item, i) => (
+                    grupo.selo === "optativa_aproveitada"
+                      ? <ChipOptativa key={i} item={item} s={s} />
+                      : <div key={i} style={{
+                          padding: "5px 12px", borderRadius: "99px", fontSize: "12px",
+                          background: s.bg, color: s.cor, border: `1px solid ${s.cor}`,
+                        }}>
+                          {typeof item === "string" ? item : (item.disciplinaNova || item.disciplinaAntiga)}
+                        </div>
                   ))}
                 </div>
               </div>

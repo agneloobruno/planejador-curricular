@@ -5,6 +5,55 @@ import GradeCurricular from "./components/GradeCurricular";
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
+function serializarErro(erro, nivel = 0) {
+  if (nivel > 2 || !erro) return null;
+
+  if (erro instanceof Error) {
+    return {
+      name: erro.name,
+      message: erro.message,
+      code: erro.code ?? null,
+      stack: erro.stack ?? null,
+      cause: serializarErro(erro.cause, nivel + 1),
+    };
+  }
+
+  if (typeof erro === "object") {
+    try {
+      return JSON.parse(JSON.stringify(erro));
+    } catch {
+      return { toString: String(erro) };
+    }
+  }
+
+  return { value: String(erro) };
+}
+
+function criarDebugPayload(erro, file) {
+  const nav = typeof navigator !== "undefined" ? navigator : null;
+
+  return {
+    timestamp: new Date().toISOString(),
+    file: file
+      ? {
+          name: file.name ?? null,
+          size: file.size ?? null,
+          type: file.type ?? null,
+          lastModified: file.lastModified ?? null,
+        }
+      : null,
+    device: nav
+      ? {
+          userAgent: nav.userAgent,
+          platform: nav.platform,
+          language: nav.language,
+          onLine: nav.onLine,
+        }
+      : null,
+    error: serializarErro(erro),
+  };
+}
+
 function temExtensaoPdf(file) {
   return typeof file?.name === "string" && file.name.toLowerCase().endsWith(".pdf");
 }
@@ -18,6 +67,8 @@ export default function App() {
   const [resultado, setResultado]     = useState(null);
   const [carregando, setCarregando]   = useState(false);
   const [erro, setErro]               = useState(null);
+  const [debugPayload, setDebugPayload] = useState(null);
+  const [debugAberto, setDebugAberto] = useState(false);
   const [arrastando, setArrastando]   = useState(false);
   const inputRef = useRef();
 
@@ -32,10 +83,14 @@ export default function App() {
       setErro("PDF muito grande. Limite de 10 MB."); return;
     }
     setCarregando(true); setErro(null);
+    setDebugPayload(null);
+    setDebugAberto(false);
     try {
       const historico = await parsearHistorico(file);
       setResultado(classificar(historico));
     } catch (e) {
+      setDebugPayload(criarDebugPayload(e, file));
+      setDebugAberto(true);
       const msg = e instanceof Error
         ? e.message
         : "Erro ao ler o PDF. Em celular, tente salvar o arquivo localmente e reenviar.";
@@ -133,11 +188,82 @@ export default function App() {
       </div>
 
       {erro && (
-        <p style={{
-          marginTop: "16px", color: "var(--red)", fontSize: "13px",
-          background: "var(--red-bg)", padding: "8px 16px",
-          borderRadius: "8px", border: "1px solid var(--red)",
-        }}>{erro}</p>
+        <div style={{ width: "100%", maxWidth: "480px", marginTop: "16px" }}>
+          <p style={{
+            color: "var(--red)", fontSize: "13px",
+            background: "var(--red-bg)", padding: "8px 16px",
+            borderRadius: "8px", border: "1px solid var(--red)",
+            marginBottom: "10px",
+          }}>{erro}</p>
+
+          {debugPayload && (
+            <div style={{
+              background: "var(--bg2)",
+              border: "1px solid var(--border2)",
+              borderRadius: "10px",
+              overflow: "hidden",
+            }}>
+              <button
+                type="button"
+                onClick={() => setDebugAberto(v => !v)}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "10px 12px",
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                }}
+              >
+                {debugAberto ? "Ocultar" : "Mostrar"} detalhes técnicos do erro
+              </button>
+
+              {debugAberto && (
+                <div style={{ padding: "0 12px 12px" }}>
+                  <pre style={{
+                    margin: 0,
+                    fontSize: "11px",
+                    lineHeight: 1.35,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    color: "#d7dcef",
+                    background: "#0b1021",
+                    border: "1px solid var(--border2)",
+                    borderRadius: "8px",
+                    padding: "10px",
+                    maxHeight: "240px",
+                    overflow: "auto",
+                  }}>
+                    {JSON.stringify(debugPayload, null, 2)}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const texto = JSON.stringify(debugPayload, null, 2);
+                      if (navigator?.clipboard?.writeText) {
+                        await navigator.clipboard.writeText(texto);
+                      }
+                    }}
+                    style={{
+                      marginTop: "8px",
+                      padding: "6px 10px",
+                      fontSize: "12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border2)",
+                      background: "transparent",
+                      color: "var(--muted)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Copiar diagnóstico
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       <p style={{ color: "var(--muted)", fontSize: "12px", marginTop: "24px" }}>

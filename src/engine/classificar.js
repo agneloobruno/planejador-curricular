@@ -184,22 +184,36 @@ export function classificar(historico) {
   // Reprovadas ficam registradas mas não vão para bloqueadas
   // A interface decide o que mostrar com base nos pré-requisitos
 
-  // 6. Calcula quais disciplinas do PPC novo já estão liberadas (pré-req satisfeitos)
-  const concluidasNoPPCNovo = new Set(obrigatorias
-    .filter(d => d.selo === "concluida_equivalencia" || d.selo === "parcial")
-    .map(d => d.disciplinaNova)
+  // 6. Calcula disciplinas liberadas e bloqueadas por pré-requisito
+  const concluidasNoPPCNovo = new Set(
+    obrigatorias
+      .filter(d => d.selo === "concluida_equivalencia" || d.selo === "concluida_historico")
+      .map(d => d.disciplinaNova)
   );
 
+  // Disciplinas liberadas = pré-req satisfeitos E ainda não concluídas
   const prereqsLiberados = fluxoNovo
     .filter(d => {
-      // Já concluída — não precisa listar
       if (concluidasNoPPCNovo.has(d.nome)) return false;
-      // Todos os pré-requisitos satisfeitos?
       return d.prereqs.every(p => concluidasNoPPCNovo.has(p));
     })
     .map(d => d.nome);
 
-  return { obrigatorias, optativas, bloqueadas: [], prereqsLiberados };
+  // Disciplinas bloqueadas = pré-req NÃO satisfeitos e não concluídas
+  const bloqueadasPorPrereq = fluxoNovo
+    .filter(d => {
+      if (concluidasNoPPCNovo.has(d.nome)) return false;
+      if (prereqsLiberados.includes(d.nome)) return false;
+      return d.prereqs.length > 0 &&
+        d.prereqs.some(p => !concluidasNoPPCNovo.has(p));
+    })
+    .map(d => ({
+      disciplinaAntiga: d.nome,
+      status: "pendente",
+      motivo: `Aguarda: ${d.prereqs.filter(p => !concluidasNoPPCNovo.has(p)).join(", ")}`,
+    }));
+
+  return { obrigatorias, optativas, bloqueadas: bloqueadasPorPrereq, prereqsLiberados };
 }
 
 // ---------------------------------------------------------------
