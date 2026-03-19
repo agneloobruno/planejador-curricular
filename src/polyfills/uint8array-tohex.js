@@ -15,3 +15,16 @@ if (
     configurable: true,
   });
 }
+
+// Polyfill para engines antigos (iOS/Android) sem Promise.withResolvers.
+if (typeof Promise !== "undefined" && typeof Promise.withResolvers !== "function") {
+  Promise.withResolvers = function withResolvers() {
+    let resolve;
+    let reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}

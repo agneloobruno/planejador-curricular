@@ -1,17 +1,33 @@
 // Lê o PDF do histórico da UFMT e retorna array de disciplinas
 
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-
 const MAX_PDF_PAGES = 80;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/legacy/build/pdf.worker.mjs",
-  import.meta.url
-).toString();
+async function lerArquivoComoArrayBuffer(file) {
+  if (file && typeof file.arrayBuffer === "function") {
+    return file.arrayBuffer();
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Falha ao ler o arquivo selecionado."));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function carregarPdfJsLegacy() {
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/legacy/build/pdf.worker.mjs",
+    import.meta.url
+  ).toString();
+  return pdfjsLib;
+}
 
 
 export async function parsearHistorico(file) {
-  const arrayBuffer = await file.arrayBuffer();
+  const arrayBuffer = await lerArquivoComoArrayBuffer(file);
+  const pdfjsLib = await carregarPdfJsLegacy();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true }).promise;
 
   if (pdf.numPages > MAX_PDF_PAGES) {
