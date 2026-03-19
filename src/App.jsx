@@ -5,6 +5,15 @@ import GradeCurricular from "./components/GradeCurricular";
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
+function temExtensaoPdf(file) {
+  return typeof file?.name === "string" && file.name.toLowerCase().endsWith(".pdf");
+}
+
+function parecePdf(file) {
+  if (!file) return false;
+  return file.type === "application/pdf" || (file.type === "" && temExtensaoPdf(file));
+}
+
 export default function App() {
   const [resultado, setResultado]     = useState(null);
   const [carregando, setCarregando]   = useState(false);
@@ -13,8 +22,11 @@ export default function App() {
   const inputRef = useRef();
 
   async function handleArquivo(file) {
-    if (!file || file.type !== "application/pdf") {
+    if (!file || !parecePdf(file)) {
       setErro("Só PDFs são aceitos."); return;
+    }
+    if (file.size === 0) {
+      setErro("O arquivo parece indisponível no dispositivo. Abra o PDF no app de arquivos e tente compartilhar/copiar localmente antes do upload."); return;
     }
     if (file.size > MAX_PDF_SIZE_BYTES) {
       setErro("PDF muito grande. Limite de 10 MB."); return;
@@ -24,7 +36,9 @@ export default function App() {
       const historico = await parsearHistorico(file);
       setResultado(classificar(historico));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao ler o PDF. Tente novamente.";
+      const msg = e instanceof Error
+        ? e.message
+        : "Erro ao ler o PDF. Em celular, tente salvar o arquivo localmente e reenviar.";
       setErro(msg);
       if (import.meta.env.DEV) console.error(e);
     } finally {

@@ -24,11 +24,29 @@ async function carregarPdfJsLegacy() {
   return pdfjsLib;
 }
 
+function validarCabecalhoPdf(bytes) {
+  if (!bytes || bytes.length < 4) {
+    throw new Error("Arquivo inválido ou incompleto. Tente baixar/salvar o PDF localmente e reenviar.");
+  }
+
+  const ehPdf =
+    bytes[0] === 0x25 && // %
+    bytes[1] === 0x50 && // P
+    bytes[2] === 0x44 && // D
+    bytes[3] === 0x46;   // F
+
+  if (!ehPdf) {
+    throw new Error("O arquivo selecionado não parece ser um PDF válido.");
+  }
+}
+
 
 export async function parsearHistorico(file) {
   const arrayBuffer = await lerArquivoComoArrayBuffer(file);
+  const bytes = new Uint8Array(arrayBuffer);
+  validarCabecalhoPdf(bytes);
   const pdfjsLib = await carregarPdfJsLegacy();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: bytes, disableWorker: true }).promise;
 
   if (pdf.numPages > MAX_PDF_PAGES) {
     throw new Error("PDF com muitas páginas. Limite de 80 páginas.");
