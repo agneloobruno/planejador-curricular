@@ -111,12 +111,12 @@ export async function parsearHistorico(file) {
 function extrairDisciplinas(texto) {
   const disciplinas = [];
 
-  // Tenta o formato com código SI/SI1/SI2/CV no início
-  const regexComCodigo =
-    /(\d{5})\s+(?:SI\d*|CV|LLB|cv)\s+(.+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AP|AE|APM|APO|RM|RMF|RF|MA|NA|RP|RMM)\b/g;
+  // Formato principal: ignora o marcador (SI/CV/etc.) e usa apenas período + nome + status.
+  const regexComMarcadorOpcional =
+    /(\d{5})\s+(?:(?:[A-Z]{1,4}\d*)\s+)?(.+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AE|AP|APE|APM|APO|IAM|DSD|DSP|MA|RF|RM|RMF|RMM|RP|NA)\b/gi;
 
   let match;
-  while ((match = regexComCodigo.exec(texto)) !== null) {
+  while ((match = regexComMarcadorOpcional.exec(texto)) !== null) {
     const periodo = match[1];
     const nome    = match[2].trim().replace(/\s+Obs:.*$/, "").trim();
     const ch      = parseInt(match[3]);
@@ -125,19 +125,17 @@ function extrairDisciplinas(texto) {
     disciplinas.push({ nome, ch, periodo, status });
   }
 
-  // Se não achou nada, tenta formato sem código (PDF renderizado diferente)
-  if (disciplinas.length === 0) {
-    const regexSemCodigo =
-      /(\d{5})\s+([A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜ][A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜa-záéíóúàãõçâêîôûü0-9 :,\-/]+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AP|AE|APM|APO|RM|RMF|RF|MA|NA|RP|RMM)\b/g;
+  // Passo complementar para PDFs renderizados de forma diferente.
+  const regexSemCodigo =
+    /(\d{5})\s+([A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜ][A-ZÁÉÍÓÚÀÃÕÇÂÊÎÔÛÜa-záéíóúàãõçâêîôûü0-9 :,\-/]+?)\s+#\d+(?:[^#\n]*?)?\s+(\d{2,3})\s+\d+\s+[\d.]+\s+\d+\s+(AE|AP|APE|APM|APO|IAM|DSD|DSP|MA|RF|RM|RMF|RMM|RP|NA)\b/gi;
 
-    while ((match = regexSemCodigo.exec(texto)) !== null) {
-      const periodo = match[1];
-      const nome    = match[2].trim().replace(/\s+Obs:.*$/, "").trim();
-      const ch      = parseInt(match[3]);
-      const status  = match[4];
-      if (nome.length < 4) continue;
-      disciplinas.push({ nome, ch, periodo, status });
-    }
+  while ((match = regexSemCodigo.exec(texto)) !== null) {
+    const periodo = match[1];
+    const nome    = match[2].trim().replace(/\s+Obs:.*$/, "").trim();
+    const ch      = parseInt(match[3]);
+    const status  = match[4];
+    if (nome.length < 4) continue;
+    disciplinas.push({ nome, ch, periodo, status });
   }
 
   return deduplicar(disciplinas);

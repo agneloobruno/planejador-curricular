@@ -156,5 +156,5 @@ export const CASO_ALGORITMOS = {
 // ---------------------------------------------------------------
 // STATUS VÁLIDOS E INVÁLIDOS
 // ---------------------------------------------------------------
-export const STATUS_APROVADO  = ["AP", "AE", "APM", "APO"];
-export const STATUS_INVALIDOS = ["RM", "RMF", "MA", "NA"];
+export const STATUS_APROVADO  = ["AE", "AP", "APE", "APM", "APO", "IAM", "DSD", "DSP"];
+export const STATUS_INVALIDOS = ["MA", "RF", "RM", "RMF", "RMM", "RP", "NA"];

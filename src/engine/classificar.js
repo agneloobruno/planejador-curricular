@@ -44,6 +44,7 @@ const ALIASES = {
   "gestao de pessoas":                      "Gestão de Pessoas",
   "informatica aplicada a educacao":        "Informática aplicada à Educação",
   "interface humano-computador":            "Interface Humano-Computador",
+  "interface humano computador":            "Interface Humano-Computador",
   "topicos especiais em banco de dados":    "Tópicos Especiais em Banco de Dados",
   "topicos especiais em engenharia de software": "Tópicos Especiais em Engenharia de Software",
   "laboratorio de programacao":             "Laboratório de Programação",
@@ -80,6 +81,8 @@ function normalizarNome(nome) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[‐‑‒–—−]/g, "-") // normaliza variantes de hifen
+    .replace(/\s*-\s*/g, "-") // remove espacos ao redor de hifen
     .replace(/\s+/g, " ")
     .trim();
 
